@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"github.com/penril0326/shorturl/cache"
@@ -66,7 +67,7 @@ func updateExpireTime(tx *gorm.DB, urlInfo UrlMapping, expireAt time.Time) error
 }
 
 func insertUrlInfo(tx *gorm.DB, originUrl string, expireAt time.Time) (string, error) {
-	currentSeq, err := GetNextSequence(TABLE_NAME_URL_MAPPING)
+	currentSeq, err := GetCurrentSequence(TABLE_NAME_URL_MAPPING)
 	if err != nil {
 		return "", err
 	}
@@ -82,34 +83,12 @@ func insertUrlInfo(tx *gorm.DB, originUrl string, expireAt time.Time) (string, e
 		return "", result.Error
 	}
 
+	if err := cache.Increase(cache.KEY_SEQUENCE); err != nil {
+		log.Println("Increase cache value failed. Key: ", cache.KEY_SEQUENCE, ", Error: ", err.Error())
+	}
+
 	return urlID, nil
 }
-
-// func CreateShortUrl(originUrl string, expireAt time.Time) (string, error) {
-// 	tx := GetDB().Table(TABLE_NAME_URL_MAPPING).Begin()
-
-// 	currentSeq, err := GetNextSequence(TABLE_NAME_URL_MAPPING)
-// 	if err != nil {
-// 		tx.Rollback()
-// 		return "", err
-// 	}
-
-// 	shortUrl := utils.Base62Encode(int64(currentSeq + 1))
-// 	data := UrlMapping{
-// 		UrlID:     shortUrl,
-// 		OriginUrl: originUrl,
-// 		ExpireAt:  expireAt,
-// 	}
-
-// 	if result := tx.Create(&data); result.Error != nil {
-// 		tx.Rollback()
-// 		return "", result.Error
-// 	}
-
-// 	tx.Commit()
-
-// 	return shortUrl, nil
-// }
 
 func DeleteByUrlID(urlID string) error {
 	tx := GetDB().Table(TABLE_NAME_URL_MAPPING).Begin()
@@ -125,8 +104,8 @@ func DeleteByUrlID(urlID string) error {
 
 	tx.Commit()
 
-	if err := cache.DeleteAll(); err != nil {
-		// log
+	if err := cache.DeleteKey(urlID); err != nil {
+		log.Println("Delete key failed. Key: ", urlID, ", Error: ", err.Error())
 	}
 
 	return nil
@@ -144,11 +123,18 @@ func GetUrlInfoByOriginUrl(originUrl string) (UrlMapping, error) {
 }
 
 func GetUrlInfoByUrlID(urlID string) (UrlMapping, error) {
-	db := GetDB().Table(TABLE_NAME_URL_MAPPING)
-
 	var urlInfo UrlMapping
+	if err := cache.GetData(urlID, &urlInfo); err == nil {
+		return urlInfo, nil
+	}
+
+	db := GetDB().Table(TABLE_NAME_URL_MAPPING)
 	if result := db.Select("*").Where("url_id = ?", urlID).Find(&urlInfo); result.Error != nil {
 		return UrlMapping{}, result.Error
+	}
+
+	if err := cache.Set(urlID, urlInfo, 1800); err != nil {
+		log.Println("Set cache error. Key: ", urlID, ", Error: ", err.Error())
 	}
 
 	return urlInfo, nil
@@ -172,7 +158,7 @@ func DeleteExpired() error {
 	tx.Commit()
 
 	if err := cache.DeleteAll(); err != nil {
-		// log
+		log.Println("Delete all cache key failed. Error: ", err.Error())
 	}
 
 	return nil

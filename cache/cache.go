@@ -14,51 +14,52 @@ func init() {
 	if mc == nil {
 		log.Panic("failed to connect memcache")
 	}
-
-	var count uint64
-	b, _ := json.Marshal(&count)
-	mc.Add(&memcache.Item{
-		Key:   KEY_SEQUENCE,
-		Value: b,
-	})
 }
 
-func Set(key string, value interface{}, expiredSecond int32) {
-	byteData, _ := json.Marshal(value)
+func Set(key string, value interface{}, expiredSecond int32) error {
+	byteData, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
 
-	mc.Set(&memcache.Item{
+	err = mc.Set(&memcache.Item{
 		Key:        key,
 		Value:      byteData,
 		Expiration: expiredSecond,
 	})
-}
 
-func Get(key string) string {
-	it, err := mc.Get(key)
 	if err != nil {
-		return ""
+		return err
 	}
 
-	var value string
-	json.Unmarshal(it.Value, &value)
+	return nil
+}
 
-	return value
+func GetData(key string, data interface{}) error {
+	it, err := mc.Get(key)
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(it.Value, data); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DeleteKey(key string) error {
+	return mc.Delete(key)
 }
 
 func DeleteAll() error {
 	return mc.DeleteAll()
 }
 
-func GetCurrentSequence() (uint64, error) {
-	it, err := mc.Get(KEY_SEQUENCE)
-	if err != nil {
-		return 0, err
+func Increase(key string) error {
+	if _, err := mc.Increment(key, 1); err != nil {
+		return err
 	}
 
-	var sequence uint64
-	if err := json.Unmarshal(it.Value, &sequence); err != nil {
-		return 0, err
-	}
-
-	return sequence, nil
+	return nil
 }
