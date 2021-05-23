@@ -58,19 +58,22 @@ func Upsert(originUrl string, newExpireAt time.Time) (string, error) {
 }
 
 func updateExpireTime(tx *gorm.DB, urlInfo UrlMapping, newExpireAt time.Time) error {
-	if utils.IsT1AfterT2(urlInfo.ExpireAt, newExpireAt) == true {
+	if utils.IsT1AfterT2(newExpireAt, time.Now()) == false {
+		return errors.New("expire time is invalid")
+	} else if (utils.IsT1AfterT2(newExpireAt, urlInfo.ExpireAt) == false) &&
+		(utils.IsT1AfterT2(newExpireAt, time.Now()) == true) {
+		return nil
+	} else {
+		if result := tx.Model(&urlInfo).Update("expire_at", newExpireAt); result.Error != nil {
+			return result.Error
+		}
+
+		if err := cache.DeleteKey(urlInfo.UrlID); (err != nil) && (err != memcache.ErrCacheMiss) {
+			log.Println("Delete cache key error. Key: ", err.Error())
+		}
+
 		return nil
 	}
-
-	if result := tx.Model(&urlInfo).Update("expire_at", newExpireAt); result.Error != nil {
-		return result.Error
-	}
-
-	if err := cache.DeleteKey(urlInfo.UrlID); err != memcache.ErrCacheMiss {
-		log.Println("Delete cache key error. Key: ", err.Error())
-	}
-
-	return nil
 }
 
 func insertUrlInfo(tx *gorm.DB, originUrl string, newExpireAt time.Time) (string, error) {
