@@ -31,7 +31,7 @@ func main() {
 
 	go func() {
 		if err := service.ListenAndServe(); err != nil {
-			log.Println("Listen and serve error. Error: ", err.Error())
+			log.Println(err.Error())
 		}
 	}()
 
