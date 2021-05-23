@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/penril0326/shorturl/cache"
 	"github.com/penril0326/shorturl/utils"
 	"gorm.io/gorm"
@@ -25,7 +26,7 @@ func (p *UrlMapping) TableName() string {
 	return TABLE_NAME_URL_MAPPING
 }
 
-func Upsert(originUrl string, expireAt time.Time) (string, error) {
+func Upsert(originUrl string, newExpireAt time.Time) (string, error) {
 	urlInfo, err := GetUrlInfoByOriginUrl(originUrl)
 	if err != nil {
 		return "", err
@@ -35,14 +36,14 @@ func Upsert(originUrl string, expireAt time.Time) (string, error) {
 
 	short := ""
 	if urlInfo.OriginUrl != "" {
-		if err := updateExpireTime(tx, urlInfo, expireAt); err != nil {
+		if err := updateExpireTime(tx, urlInfo, newExpireAt); err != nil {
 			tx.Rollback()
 			return "", err
 		}
 
 		short = urlInfo.UrlID
 	} else {
-		urlId, err := insertUrlInfo(tx, originUrl, expireAt)
+		urlId, err := insertUrlInfo(tx, originUrl, newExpireAt)
 		if err != nil {
 			tx.Rollback()
 			return "", err
@@ -56,19 +57,27 @@ func Upsert(originUrl string, expireAt time.Time) (string, error) {
 	return short, nil
 }
 
-func updateExpireTime(tx *gorm.DB, urlInfo UrlMapping, expireAt time.Time) error {
-	if expireAt.After(urlInfo.ExpireAt) == false {
+func updateExpireTime(tx *gorm.DB, urlInfo UrlMapping, newExpireAt time.Time) error {
+	if utils.IsT1AfterT2(urlInfo.ExpireAt, newExpireAt) == true {
 		return nil
 	}
 
-	if result := tx.Model(&urlInfo).Update("expire_at", expireAt); result.Error != nil {
+	if result := tx.Model(&urlInfo).Update("expire_at", newExpireAt); result.Error != nil {
 		return result.Error
+	}
+
+	if err := cache.DeleteKey(urlInfo.UrlID); err != memcache.ErrCacheMiss {
+		log.Println("Delete cache key error. Key: ", err.Error())
 	}
 
 	return nil
 }
 
-func insertUrlInfo(tx *gorm.DB, originUrl string, expireAt time.Time) (string, error) {
+func insertUrlInfo(tx *gorm.DB, originUrl string, newExpireAt time.Time) (string, error) {
+	if utils.IsT1AfterT2(time.Now(), newExpireAt) == true {
+		return "", errors.New("expire time is invalid")
+	}
+
 	currentSeq, err := GetCurrentSequence(TABLE_NAME_URL_MAPPING)
 	if err != nil {
 		return "", err
@@ -78,7 +87,7 @@ func insertUrlInfo(tx *gorm.DB, originUrl string, expireAt time.Time) (string, e
 	new := UrlMapping{
 		UrlID:     urlID,
 		OriginUrl: originUrl,
-		ExpireAt:  expireAt,
+		ExpireAt:  newExpireAt,
 	}
 
 	if result := tx.Create(&new); result.Error != nil {

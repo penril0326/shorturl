@@ -28,11 +28,6 @@ func CreateShort(ctx *gin.Context) {
 		return
 	}
 
-	if utils.IsT1BeforeT2(time.Now(), input.ExpireAt) == false {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, "expire time is invalid")
-		return
-	}
-
 	short, err := model.Upsert(input.Url, input.ExpireAt)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, "db error")
@@ -75,7 +70,7 @@ func Redirect(ctx *gin.Context) {
 		return
 	}
 
-	if (urlInfo.OriginUrl == "") || (utils.IsT1BeforeT2(time.Now(), urlInfo.ExpireAt) == false) {
+	if (urlInfo.OriginUrl == "") || (utils.IsT1AfterT2(time.Now(), urlInfo.ExpireAt) == true) {
 		ctx.AbortWithStatus(http.StatusNotFound)
 		return
 	}

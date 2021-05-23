@@ -27,8 +27,8 @@ func Base62Encode(num int64) string {
 	return result
 }
 
-func IsT1BeforeT2(t1, t2 time.Time) bool {
-	return t1.UTC().Before(t2.UTC())
+func IsT1AfterT2(t1, t2 time.Time) bool {
+	return t1.UTC().After(t2.UTC())
 }
 
 func IsUrlValid(originUrl string) bool {
