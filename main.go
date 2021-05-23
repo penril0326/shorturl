@@ -6,11 +6,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"shorturl/cache"
+	"shorturl/cronjob"
+	"shorturl/router"
 	"time"
-
-	"github.com/penril0326/shorturl/cache"
-	"github.com/penril0326/shorturl/cronjob"
-	"github.com/penril0326/shorturl/router"
 )
 
 func init() {
@@ -34,9 +33,9 @@ func main() {
 		if err := service.ListenAndServe(); err != nil {
 			log.Println("Listen and serve error. Error: ", err.Error())
 		}
-
-		log.Println("Server listen...")
 	}()
+
+	log.Println("Server listen...")
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)

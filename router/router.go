@@ -1,9 +1,10 @@
 package router
 
 import (
+	"shorturl/controller/middleware"
+	"shorturl/controller/webapi"
+
 	"github.com/gin-gonic/gin"
-	"github.com/penril0326/shorturl/controller/middleware"
-	"github.com/penril0326/shorturl/controller/webapi"
 )
 
 func init() {

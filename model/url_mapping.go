@@ -3,11 +3,11 @@ package model
 import (
 	"errors"
 	"log"
+	"shorturl/cache"
+	"shorturl/utils"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
-	"github.com/penril0326/shorturl/cache"
-	"github.com/penril0326/shorturl/utils"
 	"gorm.io/gorm"
 )
 

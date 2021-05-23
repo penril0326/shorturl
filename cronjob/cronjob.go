@@ -2,8 +2,8 @@ package cronjob
 
 import (
 	"log"
+	"shorturl/model"
 
-	"github.com/penril0326/shorturl/model"
 	"github.com/robfig/cron/v3"
 )
 

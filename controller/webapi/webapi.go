@@ -3,11 +3,11 @@ package webapi
 import (
 	"fmt"
 	"net/http"
+	"shorturl/model"
+	"shorturl/utils"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/penril0326/shorturl/model"
-	"github.com/penril0326/shorturl/utils"
 )
 
 func CreateShort(ctx *gin.Context) {

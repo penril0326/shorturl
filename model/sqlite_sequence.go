@@ -2,8 +2,7 @@ package model
 
 import (
 	"log"
-
-	"github.com/penril0326/shorturl/cache"
+	"shorturl/cache"
 )
 
 const (
