@@ -1,19 +1,19 @@
 package main
 
 import (
+	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/penril0326/shorturl/cache"
-	"github.com/penril0326/shorturl/controller/middleware"
-	"github.com/penril0326/shorturl/controller/webapi"
 	"github.com/penril0326/shorturl/cronjob"
+	"github.com/penril0326/shorturl/router"
 )
 
 func init() {
-	gin.SetMode(gin.ReleaseMode)
 	cronjob.Start()
 }
 
@@ -22,16 +22,34 @@ func main() {
 	defer cache.DeleteAll()
 
 	log.Println("Server start...")
-	r := gin.Default()
 
-	r.POST("/api/v1/urls", middleware.PostRequestLimit, webapi.CreateShort)
-	r.DELETE("/api/v1/urls/:url_id", webapi.DeleteUrl)
-	r.GET("/:url_id", middleware.GetRequestLimit, webapi.Redirect)
+	router := router.InitRouter()
 
-	go r.Run()
+	service := &http.Server{
+		Addr:    ":8080",
+		Handler: router,
+	}
+
+	go func() {
+		if err := service.ListenAndServe(); err != nil {
+			log.Println("Listen and serve error. Error: ", err.Error())
+		}
+
+		log.Println("Server listen...")
+	}()
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	go func() {
+		cancel()
+	}()
+
+	if err := service.Shutdown(ctx); err != nil {
+		log.Fatal("Failed to shutdown http service. Error: ", err.Error())
+	}
+
 	log.Println("Shutdown...")
 }
