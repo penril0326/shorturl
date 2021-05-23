@@ -51,6 +51,8 @@ func Upsert(originUrl string, expireAt time.Time) (string, error) {
 		short = urlId
 	}
 
+	tx.Commit()
+
 	return short, nil
 }
 
@@ -115,7 +117,7 @@ func GetUrlInfoByOriginUrl(originUrl string) (UrlMapping, error) {
 	db := GetDB().Table(TABLE_NAME_URL_MAPPING)
 
 	var urlInfo UrlMapping
-	if result := db.Select("origin_url, expire_at").Where("origin_url = ?", originUrl).Find(&urlInfo); result.Error != nil {
+	if result := db.Select("*").Where("origin_url = ?", originUrl).Find(&urlInfo); result.Error != nil {
 		return UrlMapping{}, result.Error
 	}
 

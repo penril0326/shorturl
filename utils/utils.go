@@ -11,10 +11,6 @@ var base62Code = []string{
 	"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
 }
 
-func GetShortUrlID(origin string) string {
-	return ""
-}
-
 func Base62Encode(num int64) string {
 	result := ""
 	if num < 0 {
@@ -33,10 +29,6 @@ func Base62Encode(num int64) string {
 
 func IsT1BeforeT2(t1, t2 time.Time) bool {
 	return t1.UTC().Before(t2.UTC())
-}
-
-func IsCurrentTimeBeforeThan(target time.Time) bool {
-	return time.Now().UTC().Before(target.UTC())
 }
 
 func IsUrlValid(originUrl string) bool {

@@ -41,7 +41,7 @@ func CreateShort(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, createShortUrlResp{
 		UrlID:    short,
-		ShortUrl: fmt.Sprintf("%s/%s", "http://localhost:8080", short),
+		ShortUrl: fmt.Sprintf("http://%s/%s", "localhost:8080", short),
 	})
 }
 
@@ -76,7 +76,7 @@ func Redirect(ctx *gin.Context) {
 	}
 
 	if (urlInfo.OriginUrl == "") || (utils.IsT1BeforeT2(time.Now(), urlInfo.ExpireAt) == false) {
-		ctx.AbortWithStatusJSON(http.StatusNotFound, "origin url not exist or expired")
+		ctx.AbortWithStatus(http.StatusNotFound)
 		return
 	}
 

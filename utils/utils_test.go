@@ -2,7 +2,6 @@ package utils
 
 import (
 	"testing"
-	"time"
 )
 
 func TestBase62Encode(t *testing.T) {
@@ -61,26 +60,6 @@ func TestBase62Encode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := Base62Encode(tt.args.num); got != tt.want {
 				t.Errorf("Base62Encode() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestIsCurrentTimeBeforeThan(t *testing.T) {
-	type args struct {
-		target time.Time
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := IsCurrentTimeBeforeThan(tt.args.target); got != tt.want {
-				t.Errorf("IsCurrentTimeBeforeThan() = %v, want %v", got, tt.want)
 			}
 		})
 	}

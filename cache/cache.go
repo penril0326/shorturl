@@ -10,7 +10,7 @@ import (
 
 func init() {
 	server := fmt.Sprintf("%s:%s", HOST, PORT)
-	mc := memcache.New(server)
+	mc = memcache.New(server)
 	if mc == nil {
 		log.Panic("failed to connect memcache")
 	}
