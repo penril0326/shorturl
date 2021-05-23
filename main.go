@@ -21,6 +21,7 @@ func main() {
 	defer cronjob.Stop()
 	defer cache.DeleteAll()
 
+	log.Println("Server start...")
 	r := gin.Default()
 
 	r.POST("/api/v1/urls", middleware.PostRequestLimit, webapi.CreateShort)
